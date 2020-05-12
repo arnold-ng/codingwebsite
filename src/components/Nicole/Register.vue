@@ -1,0 +1,347 @@
+<template>
+<b-container fluid id="main">
+    <b-row id="rows" cols="2">
+        <b-col>
+            <div id="overview" class="bg-cover"> </div>
+            <div id="rectangle"> </div>
+                <h2 id="welcome"> Hello There! </h2>
+                <p id="subtitle"> Feeling lost about coding? </p>
+                <div id="grey" class="shadow-lg p-3 mb-5 bg-grey rounded">
+                    <p id="description"> Join us on a journey to discover the tips and 
+                    tricks for coding in various languages! 
+                    Suitable for aspiring coders and experienced coders who wish to 
+                    further hone their skills or pick up a new language. </p>
+                </div>
+        </b-col>
+        <b-col>
+            <b-row no-gutters="">
+                <b-col sm="4"> <h2 id="titles"> Sign Up /</h2> </b-col>
+                <b-col align-self="start">
+                    <router-link to="/log">
+                    <h2 id="login" class='ml-n5 '> Login </h2>
+                    </router-link>
+                </b-col>
+            </b-row>
+            <h5 id="sub"> Fill in to join us! </h5>
+            <b-form @submit="onSubmit" @reset="onReset" v-if="show">
+                <b-input-group id="group1">
+                    <b-input-group-prepend is-text>
+                        <b-icon icon="at" variant="info"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input id="name" v-model.lazy="form.name" type="text" required placeholder="Name"> </b-form-input>
+                </b-input-group>
+                <b-input-group id="group2">
+                    <b-input-group-prepend is-text>
+                        <b-icon icon="envelope" variant="info"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input type="email" required placeholder="Email" v-model.lazy="form.email"> </b-form-input>
+                </b-input-group>
+                <b-input-group id="group3">
+                    <b-input-group-prepend is-text>
+                        <b-icon icon="lock-fill" variant="info"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input type="password" required placeholder="Password" v-model.lazy="form.password"> </b-form-input>
+                </b-input-group>
+                <b-input-group id="group4">
+                    <b-input-group-prepend is-text>
+                        <b-icon icon="shield-lock-fill" variant="info"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input type="password" required placeholder="Re-enter Password" v-model.lazy="form.password2"> </b-form-input>
+                </b-input-group>
+                <b-input-group id="group5">
+                    <b-input-group-prepend is-text>
+                        <b-icon icon="book-half-fill" variant="info"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input type="text" required placeholder="Course" v-model.lazy="form.course"> </b-form-input>
+                </b-input-group>
+                <b-input-group id="group6">
+                    <b-input-group-prepend is-text>
+                        <b-icon icon="calendar-fill" variant="info"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-select v-model.lazy="form.year" :options="options"> </b-form-select>
+                </b-input-group>
+                <br>
+                <br>
+                <!-- <router-link id="move" to="/after"> -->
+                    <b-button block variant="outline-light" id="start" v-on:click.prevent='register' class='mb-5'> Let's Get Started! </b-button>
+                <!-- </router-link> -->
+            </b-form>
+        </b-col>
+    </b-row>
+</b-container>
+</template>
+
+<script>
+import db from "../../firebase.js";
+import firebase from 'firebase';
+  export default {
+    data() {
+      return {
+        form: {
+          name: '',
+          email: '',
+          password: '',
+          password2: '',
+          course: '',
+          year: null,
+
+        },
+        show: true,
+        options: [
+            { value: null, text: 'Year of study' },
+            { value: '1', text: 'Year 1' },
+            { value: '2', text: 'Year 2' },
+            { value: '3', text: 'Year 3' },
+            { value: '4', text: 'Year 4' }
+        ]
+      }
+    },
+    methods: {
+      onSubmit(evt) {
+        evt.preventDefault()
+        alert(JSON.stringify(this.form))
+      },
+      onReset(evt) {
+        evt.preventDefault()
+        // Reset our form values
+        this.form.name = '',
+        this.form.email = '',
+        this.form.password = '',
+        this.form.password2 = '',
+        this.form.course = '',
+        this.form.year = []
+        // Trick to reset/clear native browser form validation state
+        this.show = false
+        this.$nextTick(() => {
+          this.show = true
+        })
+      },
+      register() {
+        firebase.auth().createUserWithEmailAndPassword(this.form.email, this.form.password)
+        .then((user) => {
+            alert('Your account has been created!')
+            console.log(user.user)
+            this.$store.commit('setCurrentUser', user.user)
+            db.collection('users').doc(user.user.uid).set({
+                name: this.form.name,
+                email: this.form.email,
+                password: this.form.password,
+                password2: this.form.password2,
+                course: this.form.course,
+                year: this.form.year,
+                badges: 0,
+                rank: 0,
+                oValue: 0,
+                pValue: 0,
+                jValue: 0,
+                jsValue: 0,
+                current: 'None',
+                recommended: 'None',
+                prevRank: [],
+                pythonEasy:0, 
+                pythonMed:0, 
+                pythonHard:0, 
+                javaEasy:0, 
+                javaMed:0, 
+                javaHard:0,
+                jsEasy:0, 
+                jsMed:0, 
+                jsHard:0
+            
+
+            }).then(() => {
+                this.$store.dispatch('fetchUserProfile')
+                this.$router.replace('/')
+            }).catch(error => {
+                console.log(error)
+            })
+            db.collection('users').doc(user.user.uid).collection('easy exercises hint').doc('java easy hint').set({
+                color: '#E9C1B9',
+                hint: 0,
+                language: 'Java'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('easy exercises hint').doc('js easy hint').set({
+                color: '#B6AACD',
+                hint: 0,
+                language: 'Javascript'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('easy exercises hint').doc('python easy hint').set({
+                color: '#AAC9AF',
+                hint: 0,
+                language: 'Python'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('medium exercises hint').doc('java medium hint').set({
+                color: '#DD8C7C',
+                hint: 0,
+                language: 'Java'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('medium exercises hint').doc('js medium hint').set({
+                color: '#9A82C4',
+                hint: 0,
+                language: 'Javascript'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('medium exercises hint').doc('python medium hint').set({
+                color: '#7ECA8A',
+                hint: 0,
+                language: 'Python'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('hard exercises hint').doc('java hard hint').set({
+                color: '#BF3E24',
+                hint: 0,
+                language: 'Java'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('hard exercises hint').doc('js hard hint').set({
+                color: '#5429A0',
+                hint: 0,
+                language: 'Javascript'
+            }, {merge: true})
+            db.collection('users').doc(user.user.uid).collection('hard exercises hint').doc('python hard hint').set({
+                color: '#378C43',
+                hint: 0,
+                language: 'Python'
+            }, {merge: true})
+        })
+        .catch((error) => {
+            alert('Oops. ' + error.message)
+            console.log(error)
+        })
+      }
+    }
+  }
+</script>
+
+<style scoped>
+#main {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0%;
+
+}
+
+#rows {
+    height: 100%;
+    width: 100%;
+}
+
+#overview {
+    position: absolute;
+    left: 0%;
+    background-image:url('/assets/login.jpeg');
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+}
+
+
+.bg-cover {
+  background-size: cover !important;
+}
+
+#rectangle{
+    position: absolute;
+    background-color: rgba(23, 23, 23, 0.49);
+    top: 0%;
+    left: 0%;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+}
+
+#welcome {
+    font-family: 'Futura Hv BT';
+    font-size: 250%;
+    text-align: center;
+    padding-top: 30%;
+    color: #ffffff;
+}
+
+#subtitle {
+    font-family: 'Futura Hv BT';
+    font-size: 150%;
+    text-align: center;
+    color:  #ffffff;
+}
+
+#grey {
+    text-align: center;
+    font-family: 'Futura Hv BT';
+    background-color: rgba(196, 196, 196, 0.7);
+    width: 68%;
+    margin-left: 15%;
+    padding-top: 10%;
+    font-size: 120%;
+    color: #000000;
+
+}
+
+#titles {
+    font-family: 'Futura Hv BT';
+    font-size: 190%;
+    padding-top: 20%;
+    margin-left: 20%;
+    height: 40%;
+    width: 75%;
+}
+
+#login {
+    font-family: 'Futura Hv BT';
+    font-size: 190%;
+    padding-top: 10%;
+    margin-left: 0%;
+    text-align: left;
+    color: #ADACAC;
+    text-decoration: underline;
+}
+
+#sub {
+    font-family: 'Futura Hv BT';
+    font-size: 150%;
+    margin-left: 7%;
+    padding-top: 8%;
+}
+
+#group1 {
+    padding-top: 10%;
+    margin-left: 6%;
+    width: 90%;
+}
+
+#group2 {
+    width: 90%;
+    margin-left: 6%;
+    padding-top: 7%;
+}
+
+#group3 {
+    width: 90%;
+    margin-left: 6%;
+    padding-top: 7%;
+}
+
+#group4 {
+    width: 90%;
+    margin-left: 6%;
+    padding-top: 7%;
+}
+
+#group5 {
+    width: 90%;
+    margin-left: 6%;
+    padding-top: 7%;
+}
+
+#group6 {
+    width: 90%;
+    margin-left: 6%;
+    padding-top: 7%;
+}
+
+#start {
+    font-family: 'Futura Hv BT';
+    background-color: #84CEEB;
+    margin-left: 29%;
+    width: 50%;
+}
+
+</style> 
